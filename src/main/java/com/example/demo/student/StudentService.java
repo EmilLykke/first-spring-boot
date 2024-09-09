@@ -5,7 +5,8 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.transaction.annotation.Transactional;
+
 
 @Service
 public class StudentService {
@@ -37,5 +38,24 @@ public class StudentService {
             throw new IllegalStateException("student with id " + studentId + " does not exist");
         }
         studentRepository.deleteById(studentId);
+    }
+
+    // This annotation is used to indicate that the method should be run within a transaction.
+    // This puts it into a managed state. No need to call save() method.
+    @Transactional
+    public void updateStudent(Long studentId, String name, String email) {
+        Student student = studentRepository.findById(studentId).orElseThrow(() -> new IllegalStateException("student with id " + studentId + " does not exist"));
+
+        if(name != null && name.length() > 0 && !student.getName().equals(name)){
+            student.setName(name);
+        }
+        
+        if(email != null && email.length() > 0 && !student.getEmail().equals(email)){
+            Optional<Student> studentOptional = studentRepository.findStudentByEmail(email);
+            if(studentOptional.isPresent()){
+                throw new IllegalStateException("email taken");
+            }
+            student.setEmail(email);
+        }
     } 
 }
